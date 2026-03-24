@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mikelmarin.eu</title>
+<meta name="description" content="Mikel Marin Visual Studio — Architectural Visualization">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-main: 'Host Grotesk', sans-serif;
+    --bg: #f4f3f0;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --gap: clamp(6px, 0.8vw, 12px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-family: var(--font-main);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { overflow: hidden; }
+  body.gallery-active { overflow-y: auto; }
+
+  /* ===========================================
+     INTRO
+     =========================================== */
+  #intro {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  #intro.fade-out {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+
+  .intro-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    opacity: 0;
+  }
+
+  .intro-mask-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    will-change: opacity;
+    background: var(--bg);
+  }
+
+  .intro-mask-wrap svg { width: 100%; height: 100%; display: block; }
+
+  .intro-text-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    will-change: opacity;
+    opacity: 0;
+    background: var(--bg);
+  }
+
+  .intro-text-layer svg { width: 100%; height: 100%; display: block; }
+
+  /* ===========================================
+     GALLERY
+     =========================================== */
+  #gallery {
+    opacity: 0;
+    transition: opacity 0.8s ease 0.3s;
+    min-height: 100vh;
+    padding: var(--gap);
+  }
+
+  #gallery.visible { opacity: 1; }
+
+  /* Header */
+  .gallery-header {
+    padding: clamp(20px, 3vw, 40px) clamp(12px, 2vw, 32px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .gallery-logo {
+    cursor: pointer;
+    display: inline-block;
+    transition: opacity 0.3s;
+  }
+
+  .gallery-logo:hover { opacity: 0.6; }
+
+  .gallery-logo .gl-name {
+    text-align: left;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    -webkit-text-stroke: 0.3px var(--text);
+  }
+
+  .gallery-logo .gl-sub {
+    text-align: left;
+    font-weight: 300;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    margin-top: -1px;
+    padding-left: 3.95em;
+  }
+
+  .gallery-nav-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    padding-bottom: 1px;
+  }
+
+  .gallery-nav {
+    display: flex;
+    gap: 24px;
+  }
+
+  .gallery-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .gallery-nav a:hover {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .gallery-nav a.active {
+    color: var(--text);
+  }
+
+  .lang-switch {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-left: 16px;
+    padding-left: 16px;
+    border-left: 1px solid #ccc;
+  }
+
+  .lang-switch a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 0.3s;
+    text-transform: uppercase;
+  }
+
+  .lang-switch a:hover,
+  .lang-switch a.active {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .lang-switch span { color: #ccc; }
+
+  /* Grid */
+  .grid {
+    display: columns;
+    columns: 3;
+    column-gap: var(--gap);
+    padding: 0 0 var(--gap) 0;
+  }
+
+  @media (max-width: 900px) { .grid { columns: 2; } }
+  @media (max-width: 540px) { .grid { columns: 1; } }
+
+  .grid-item {
+    break-inside: avoid;
+    margin-bottom: var(--gap);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .grid-item img {
+    width: 100%;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .grid-item:hover img { transform: scale(1.03); }
+
+  /* ===========================================
+     LIGHTBOX
+     =========================================== */
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  #lightbox.active { opacity: 1; pointer-events: all; }
+
+  #lightbox img {
+    max-width: 90vw;
+    max-height: 88vh;
+    object-fit: contain;
+    transform: scale(0.95);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #lightbox.active img { transform: scale(1); }
+
+  .lightbox-close {
+    position: absolute;
+    top: clamp(16px, 2vw, 32px);
+    right: clamp(16px, 2vw, 32px);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font-main);
+    transition: color 0.3s ease;
+  }
+
+  .lightbox-close:hover { color: #fff; }
+
+  .lightbox-counter {
+    position: absolute;
+    bottom: clamp(16px, 2vw, 32px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    font-weight: 300;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 20px;
+    font-family: var(--font-main);
+    transition: color 0.3s ease;
+  }
+
+  .lightbox-nav:hover { color: #fff; }
+  .lightbox-prev { left: clamp(8px, 2vw, 24px); }
+  .lightbox-next { right: clamp(8px, 2vw, 24px); }
+
+  /* About page */
+  .about-section {
+    display: none;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(40px, 8vw, 100px) clamp(12px, 4vw, 32px);
+    min-height: 60vh;
+  }
+
+  .about-section.visible { display: block; }
+
+  .about-section p {
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 16px;
+    max-width: 480px;
+  }
+
+  .about-section .about-name {
+    font-weight: 800;
+    -webkit-text-stroke: 0.3px var(--text);
+  }
+
+  .about-section .quote {
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.9;
+    margin: 40px 0;
+    font-style: italic;
+    max-width: 480px;
+  }
+
+  .about-section .cta {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.9;
+    margin-top: 40px;
+  }
+
+  .about-section .cta a:hover {
+    opacity: 0.6;
+  }
+
+  /* Footer */
+  .footer {
+    padding: clamp(32px, 5vw, 80px) clamp(12px, 2vw, 32px);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 300;
+    color: var(--text-muted);
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .gallery-header {
+      padding: 16px 12px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .gallery-nav-wrap {
+      gap: 16px;
+    }
+
+    .gallery-nav { gap: 16px; }
+
+    .lang-switch {
+      margin-left: 12px;
+      padding-left: 12px;
+    }
+
+    .lightbox-nav { font-size: 20px; padding: 12px; }
+    .lightbox-close { font-size: 9px; }
+
+    .footer {
+      padding: 24px 12px;
+      flex-direction: column;
+      gap: 6px;
+      text-align: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== INTRO ===================== -->
+<div id="intro">
+  <video id="vid-a" class="intro-video" muted playsinline preload="auto"
+         src="mikelmarin-site/VideoProject2.mp4"></video>
+  <video id="vid-b" class="intro-video" muted playsinline preload="auto"></video>
+
+  <div class="intro-mask-wrap" id="introMask">
+    <svg id="maskSvg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <mask id="textMask">
+          <rect width="100%" height="100%" fill="white"/>
+          <text id="mask-line1" x="540" y="285" text-anchor="middle"
+                font-family="'Host Grotesk', sans-serif" font-weight="800"
+                font-size="100" letter-spacing="1" fill="black">mikel marin</text>
+          <text id="mask-line2" x="660" y="365" text-anchor="middle"
+                font-family="'Host Grotesk', sans-serif" font-weight="300"
+                font-size="88" letter-spacing="1" fill="black">visual studio</text>
+        </mask>
+      </defs>
+      <rect width="100%" height="100%" fill="#f4f3f0" mask="url(#textMask)"/>
+    </svg>
+  </div>
+
+  <div class="intro-text-layer" id="introText">
+    <svg id="textSvg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#f4f3f0"/>
+      <text id="text-line1" x="540" y="285" text-anchor="middle"
+            font-family="'Host Grotesk', sans-serif" font-weight="800"
+            font-size="100" letter-spacing="1" fill="#1a1a1a">mikel marin</text>
+      <text id="text-line2" x="660" y="365" text-anchor="middle"
+            font-family="'Host Grotesk', sans-serif" font-weight="300"
+            font-size="88" letter-spacing="1" fill="#1a1a1a">visual studio</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ===================== GALLERY ===================== -->
+<div id="gallery">
+  <header class="gallery-header">
+    <div class="gallery-logo" id="logoReset">
+      <div class="gl-name">mikel marin</div>
+      <div class="gl-sub">visual studio</div>
+    </div>
+    <div class="gallery-nav-wrap">
+      <nav class="gallery-nav">
+        <a href="#" class="active" data-en="work" data-es="trabajo">work</a>
+        <a href="#" data-en="process" data-es="proceso">process</a>
+        <a href="#" data-en="about" data-es="sobre">about</a>
+        <a href="#" data-en="contact" data-es="contacto">contact</a>
+      </nav>
+      <div class="lang-switch">
+        <a href="#" class="active" id="lang-en">EN</a>
+        <span>/</span>
+        <a href="#" id="lang-es">ES</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="grid-item" data-index="0"><img src="mikelmarin-site/images/mikelmarin-100.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="1"><img src="mikelmarin-site/images/mikelmarin-101.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="2"><img src="mikelmarin-site/images/mikelmarin-102.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="3"><img src="mikelmarin-site/images/mikelmarin-103.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="4"><img src="mikelmarin-site/images/mikelmarin-104.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="5"><img src="mikelmarin-site/images/mikelmarin-105.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="6"><img src="mikelmarin-site/images/mikelmarin-106.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="7"><img src="mikelmarin-site/images/mikelmarin-107.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="8"><img src="mikelmarin-site/images/mikelmarin-108.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="9"><img src="mikelmarin-site/images/mikelmarin-109.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="10"><img src="mikelmarin-site/images/mikelmarin-110.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="11"><img src="mikelmarin-site/images/mikelmarin-111.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="12"><img src="mikelmarin-site/images/mikelmarin-112.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="13"><img src="mikelmarin-site/images/mikelmarin-113.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="14"><img src="mikelmarin-site/images/mikelmarin-114.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="15"><img src="mikelmarin-site/images/mikelmarin-115.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="16"><img src="mikelmarin-site/images/mikelmarin-116.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="17"><img src="mikelmarin-site/images/mikelmarin-117.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="18"><img src="mikelmarin-site/images/mikelmarin-118.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="19"><img src="mikelmarin-site/images/mikelmarin-119.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="20"><img src="mikelmarin-site/images/mikelmarin-120.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="21"><img src="mikelmarin-site/images/mikelmarin-121.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="22"><img src="mikelmarin-site/images/mikelmarin-122.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="23"><img src="mikelmarin-site/images/mikelmarin-123.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="24"><img src="mikelmarin-site/images/mikelmarin-124.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="25"><img src="mikelmarin-site/images/mikelmarin-125.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="26"><img src="mikelmarin-site/images/mikelmarin-126.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="27"><img src="mikelmarin-site/images/mikelmarin-127.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="28"><img src="mikelmarin-site/images/mikelmarin-128.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="29"><img src="mikelmarin-site/images/mikelmarin-129.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="30"><img src="mikelmarin-site/images/mikelmarin-130.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="31"><img src="mikelmarin-site/images/mikelmarin-131.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="32"><img src="mikelmarin-site/images/mikelmarin-132.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="33"><img src="mikelmarin-site/images/mikelmarin-133.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="34"><img src="mikelmarin-site/images/mikelmarin-134.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="35"><img src="mikelmarin-site/images/mikelmarin-135.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="36"><img src="mikelmarin-site/images/mikelmarin-136.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="37"><img src="mikelmarin-site/images/mikelmarin-137.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="38"><img src="mikelmarin-site/images/mikelmarin-138.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="39"><img src="mikelmarin-site/images/mikelmarin-139.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="40"><img src="mikelmarin-site/images/mikelmarin-140.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="41"><img src="mikelmarin-site/images/mikelmarin-141.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="42"><img src="mikelmarin-site/images/mikelmarin-142.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="43"><img src="mikelmarin-site/images/mikelmarin-143.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="44"><img src="mikelmarin-site/images/mikelmarin-144.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="45"><img src="mikelmarin-site/images/mikelmarin-145.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="46"><img src="mikelmarin-site/images/mikelmarin-146.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="47"><img src="mikelmarin-site/images/mikelmarin-147.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="48"><img src="mikelmarin-site/images/mikelmarin-148.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="49"><img src="mikelmarin-site/images/mikelmarin-149.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="50"><img src="mikelmarin-site/images/mikelmarin-150.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="51"><img src="mikelmarin-site/images/mikelmarin-151.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="52"><img src="mikelmarin-site/images/mikelmarin-152.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="53"><img src="mikelmarin-site/images/mikelmarin-153.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="54"><img src="mikelmarin-site/images/mikelmarin-154.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="55"><img src="mikelmarin-site/images/mikelmarin-155.jpg" alt="" loading="lazy"></div>
+    <div class="grid-item" data-index="56"><img src="mikelmarin-site/images/mikelmarin-156.jpg" alt="" loading="lazy"></div>
+  </div>
+
+  <div class="about-section" id="aboutSection">
+    <div id="about-en">
+      <p><span class="about-name">mikel marin</span> is an architect specialized in digital visualization. his experience across very different architecture studios, combined with numerous visualization collaborations, has shaped a highly adaptive approach to image creation. rather than relying on a single visual identity, his style changes seamlessly, always looking to capture the essence of the project.</p>
+      <p>whether a project demands a deeply evocative, artistic atmosphere or a clean, ultra-realistic aesthetic, his focus remains constant: to craft distinct visuals that command attention and stand out from the rest.</p>
+      <div class="quote">"A great image does much more than merely describe a space. it is a tool to enhance the design, captivate the viewer's imagination, and invite them to step inside and learn the story behind the project."</div>
+      <p class="cta"><a href="#" id="cta-en" style="color:inherit;text-decoration:none">let's talk about how we can show your project.</a></p>
+    </div>
+    <div id="about-es" style="display:none">
+      <p><span class="about-name">mikel marin</span> es un arquitecto especializado en visualización digital. su trayectoria en estudios de arquitectura de perfiles muy diversos, combinada con numerosas colaboraciones en el ámbito de la visualización, ha consolidado un enfoque muy versátil hacia la creación de imágenes. en lugar de limitarse a una única identidad visual, su estilo cambia de manera fluida, buscando siempre capturar la esencia del proyecto.</p>
+      <p>ya sea que un encargo requiera de una atmósfera con gran fuerza expresiva o una estética limpia y ultrarrealista, su objetivo se mantiene constante: crear imágenes singulares que atrapen la mirada y destaquen del resto.</p>
+      <div class="quote">"Una gran imagen hace mucho más que simplemente describir un espacio. es una herramienta para realzar el diseño, incentivar la imaginación del espectador e invitarlo a adentrarse y descubrir la historia detrás del proyecto."</div>
+      <p class="cta"><a href="#" id="cta-es" style="color:inherit;text-decoration:none">hablemos sobre cómo podemos mostrar tu proyecto.</a></p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>&copy; 2026 Mikel Marin Visual Studio</span>
+    <span>Barcelona</span>
+  </footer>
+</div>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-close">Close</button>
+  <button class="lightbox-nav lightbox-prev">&#8592;</button>
+  <button class="lightbox-nav lightbox-next">&#8594;</button>
+  <div class="lightbox-counter"><span id="lb-current">1</span> / <span id="lb-total">57</span></div>
+</div>
+
+<script>
+(function() {
+  // ===== PROTECTIONS =====
+  // Disable right-click on images
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.tagName === 'IMG') e.preventDefault();
+  });
+  // Disable Ctrl+scroll zoom
+  document.addEventListener('wheel', function(e) {
+    if (e.ctrlKey) e.preventDefault();
+  }, { passive: false });
+  // Disable Ctrl+Plus/Minus zoom
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+      e.preventDefault();
+    }
+  });
+  var intro     = document.getElementById('intro');
+  var vidA      = document.getElementById('vid-a');
+  var vidB      = document.getElementById('vid-b');
+  var maskWrap  = document.getElementById('introMask');
+  var textLayer = document.getElementById('introText');
+  var gallery   = document.getElementById('gallery');
+  var activeVid = vidA;
+
+  var playlist = [
+    'mikelmarin-site/VideoProject2.mp4',
+    'mikelmarin-site/openart-video_6f8897ab_1772064040737.mp4',
+    'mikelmarin-site/VideoProject1.mp4',
+    'mikelmarin-site/PlazaPescadoresPOV1.mp4'
+  ];
+  var currentIdx = 0;
+
+  function preloadNext() {
+    var nextIdx = (currentIdx + 1) % playlist.length;
+    var nextVid = (activeVid === vidA) ? vidB : vidA;
+    nextVid.src = playlist[nextIdx];
+    nextVid.load();
+  }
+
+  function playNext() {
+    currentIdx = (currentIdx + 1) % playlist.length;
+    var nextVid = (activeVid === vidA) ? vidB : vidA;
+    if (!nextVid.src || !nextVid.src.includes(playlist[currentIdx])) {
+      nextVid.src = playlist[currentIdx];
+      nextVid.load();
+    }
+    nextVid.style.opacity = 1;
+    nextVid.play().catch(function(){});
+    activeVid.style.opacity = 0;
+    activeVid = nextVid;
+    setTimeout(preloadNext, 500);
+  }
+
+  vidA.addEventListener('ended', playNext);
+  vidB.addEventListener('ended', playNext);
+  vidA.addEventListener('error', function() { setTimeout(playNext, 100); });
+  vidB.addEventListener('error', function() { setTimeout(playNext, 100); });
+  vidA.addEventListener('canplay', function() { preloadNext(); }, { once: true });
+
+  // Mobile SVG adjustment
+  function adjustForMobile() {
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    if (w < 768) {
+      var vbW = 1200;
+      var vbH = Math.round(1200 * (h / w));
+      var centerY = Math.round(vbH / 2);
+      var vb = '0 0 ' + vbW + ' ' + vbH;
+      document.getElementById('maskSvg').setAttribute('viewBox', vb);
+      document.getElementById('textSvg').setAttribute('viewBox', vb);
+      var els = [
+        ['mask-line1', centerY - 20, '62'],
+        ['mask-line2', centerY + 40, '54'],
+        ['text-line1', centerY - 20, '62'],
+        ['text-line2', centerY + 40, '54']
+      ];
+      els.forEach(function(e) {
+        var el = document.getElementById(e[0]);
+        if (el) { el.setAttribute('y', e[1]); el.setAttribute('font-size', e[2]); }
+      });
+    }
+  }
+  adjustForMobile();
+
+  // Intro animation
+  var start = null;
+  var finished = false;
+  vidA.play().catch(function(){});
+
+  var T_TEXT_IN = 500, T_HOLD = 1500, T_REVEAL = 3000, T_HOLD2 = 4000, T_DISSOLVE = 6000;
+
+  function clamp01(t) { return Math.max(0, Math.min(1, t)); }
+  function easeOut(t) { return 1 - (1 - t) * (1 - t); }
+  function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2; }
+
+  function skipToGallery() {
+    if (finished) return;
+    finished = true;
+    activeVid.style.opacity = 1;
+    maskWrap.style.opacity = '0';
+    textLayer.style.opacity = '0';
+    intro.classList.add('fade-out');
+    gallery.classList.add('visible');
+    document.body.classList.add('gallery-active');
+    setTimeout(function() {
+      intro.style.display = 'none';
+      vidA.pause(); vidB.pause();
+    }, 1000);
+  }
+
+  intro.addEventListener('click', skipToGallery);
+
+  function tick(now) {
+    if (!start) start = now;
+    var e = now - start;
+    var textOp = 0;
+    if (e <= T_TEXT_IN) { textOp = easeOut(clamp01(e / T_TEXT_IN)); }
+    else if (e <= T_HOLD) { textOp = 1; }
+
+    var vidOp = 0;
+    if (e >= T_HOLD && e <= T_REVEAL) {
+      var t = clamp01((e - T_HOLD) / (T_REVEAL - T_HOLD));
+      vidOp = easeInOut(t); textOp = 1 - easeInOut(t);
+    } else if (e > T_REVEAL) { vidOp = 1; textOp = 0; }
+
+    var maskOp = 1;
+    if (e >= T_HOLD2 && e <= T_DISSOLVE) {
+      maskOp = 1 - easeInOut(clamp01((e - T_HOLD2) / (T_DISSOLVE - T_HOLD2)));
+    } else if (e > T_DISSOLVE) { maskOp = 0; }
+
+    activeVid.style.opacity = vidOp;
+    textLayer.style.opacity = textOp;
+    maskWrap.style.opacity = maskOp;
+
+    if (e < T_DISSOLVE && !finished) { requestAnimationFrame(tick); }
+  }
+  requestAnimationFrame(tick);
+
+  // ===== LOGO CLICK = RESET =====
+  document.getElementById('logoReset').addEventListener('click', function() {
+    window.scrollTo(0, 0);
+    // Reset to work page
+    document.querySelector('.grid').style.display = '';
+    document.getElementById('aboutSection').classList.remove('visible');
+    document.querySelectorAll('.gallery-nav a').forEach(function(a) { a.classList.remove('active'); });
+    document.querySelectorAll('.gallery-nav a')[0].classList.add('active');
+    // Reset to intro
+    gallery.classList.remove('visible');
+    document.body.classList.remove('gallery-active');
+    intro.style.display = '';
+    intro.classList.remove('fade-out');
+    maskWrap.style.opacity = '1';
+    textLayer.style.opacity = '0';
+    activeVid.style.opacity = 0;
+    start = null;
+    finished = false;
+    currentIdx = 0;
+    vidA.src = playlist[0];
+    vidA.load();
+    activeVid = vidA;
+    vidA.play().catch(function(){});
+    document.body.overflow = 'hidden';
+    requestAnimationFrame(tick);
+  });
+
+  // ===== LANGUAGE SWITCH =====
+  var currentLang = 'en';
+  var aboutEn = document.getElementById('about-en');
+  var aboutEs = document.getElementById('about-es');
+
+  document.getElementById('lang-en').addEventListener('click', function(e) {
+    e.preventDefault(); setLang('en');
+  });
+  document.getElementById('lang-es').addEventListener('click', function(e) {
+    e.preventDefault(); setLang('es');
+  });
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    document.getElementById('lang-es').classList.toggle('active', lang === 'es');
+    document.querySelectorAll('[data-' + lang + ']').forEach(function(el) {
+      el.textContent = el.getAttribute('data-' + lang);
+    });
+    aboutEn.style.display = (lang === 'en') ? '' : 'none';
+    aboutEs.style.display = (lang === 'es') ? '' : 'none';
+  }
+
+  // ===== PAGE NAVIGATION =====
+  var gridEl = document.querySelector('.grid');
+  var aboutEl = document.getElementById('aboutSection');
+  var navLinks = document.querySelectorAll('.gallery-nav a');
+
+  function showPage(page) {
+    window.scrollTo(0, 0);
+    navLinks.forEach(function(a) { a.classList.remove('active'); });
+
+    if (page === 'work' || page === 'trabajo') {
+      gridEl.style.display = '';
+      aboutEl.classList.remove('visible');
+      navLinks[0].classList.add('active');
+    } else if (page === 'about' || page === 'sobre') {
+      gridEl.style.display = 'none';
+      aboutEl.classList.add('visible');
+      navLinks[2].classList.add('active');
+    }
+  }
+
+  navLinks.forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      var page = a.textContent.toLowerCase().trim();
+      showPage(page);
+    });
+  });
+
+  // CTA links → go to contact
+  document.getElementById('cta-en').addEventListener('click', function(e) {
+    e.preventDefault(); navLinks[3].click();
+  });
+  document.getElementById('cta-es').addEventListener('click', function(e) {
+    e.preventDefault(); navLinks[3].click();
+  });
+
+  // ===== LIGHTBOX =====
+  var lightbox    = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightbox-img');
+  var lbCurrent   = document.getElementById('lb-current');
+  var items       = document.querySelectorAll('.grid-item');
+  var images      = Array.from(items).map(function(i) { return i.querySelector('img').src; });
+  var idx = 0;
+
+  function open(i) {
+    idx = i;
+    lightboxImg.src = images[i];
+    lbCurrent.textContent = i + 1;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function nav(d) {
+    idx = (idx + d + images.length) % images.length;
+    lightboxImg.src = images[idx];
+    lbCurrent.textContent = idx + 1;
+  }
+
+  items.forEach(function(el) { el.addEventListener('click', function() { open(+el.dataset.index); }); });
+  document.querySelector('.lightbox-close').addEventListener('click', function(e) { e.stopPropagation(); close(); });
+  lightbox.addEventListener('click', function(e) { if (e.target === lightbox) close(); });
+  document.querySelector('.lightbox-prev').addEventListener('click', function(e) { e.stopPropagation(); nav(-1); });
+  document.querySelector('.lightbox-next').addEventListener('click', function(e) { e.stopPropagation(); nav(1); });
+  document.addEventListener('keydown', function(e) {
+    if (!lightbox.classList.contains('active')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') nav(-1);
+    if (e.key === 'ArrowRight') nav(1);
+  });
+})();
+</script>
+
+</body>
+</html>
